@@ -1,0 +1,127 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <title></title>
+<style id="system" type="text/css">h1,h2,h3,h4,h5,h6,p,blockquote {    margin: 0;    padding: 0;}body {    font-family: "Helvetica Neue", Helvetica, "Hiragino Sans GB", Arial, sans-serif;    font-size: 13px;    line-height: 18px;    color: #737373;    margin: 10px 13px 10px 13px;}a {    color: #0069d6;}a:hover {    color: #0050a3;    text-decoration: none;}a img {    border: none;}p {    margin-bottom: 9px;}h1,h2,h3,h4,h5,h6 {    color: #404040;    line-height: 36px;}h1 {    margin-bottom: 18px;    font-size: 30px;}h2 {    font-size: 24px;}h3 {    font-size: 18px;}h4 {    font-size: 16px;}h5 {    font-size: 14px;}h6 {    font-size: 13px;}hr {    margin: 0 0 19px;    border: 0;    border-bottom: 1px solid #ccc;}blockquote {    padding: 13px 13px 21px 15px;    margin-bottom: 18px;    font-family:georgia,serif;    font-style: italic;}blockquote:before {    content:"C";    font-size:40px;    margin-left:-10px;    font-family:georgia,serif;    color:#eee;}blockquote p {    font-size: 14px;    font-weight: 300;    line-height: 18px;    margin-bottom: 0;    font-style: italic;}code, pre {    font-family: Monaco, Andale Mono, Courier New, monospace;}code {    background-color: #fee9cc;    color: rgba(0, 0, 0, 0.75);    padding: 1px 3px;    font-size: 12px;    -webkit-border-radius: 3px;    -moz-border-radius: 3px;    border-radius: 3px;}pre {    display: block;    padding: 14px;    margin: 0 0 18px;    line-height: 16px;    font-size: 11px;    border: 1px solid #d9d9d9;    white-space: pre-wrap;    word-wrap: break-word;}pre code {    background-color: #fff;    color:#737373;    font-size: 11px;    padding: 0;}@media screen and (min-width: 768px) {    body {        width: 748px;        margin:10px auto;    }}</style><style id="custom" type="text/css"></style></head>
+<body marginheight="0"><h1>Find Related Logs</h1>
+<h2>/api/clientActivity</h2>
+<p>REST API to retrieve client activities for observables
+
+</p>
+<h2>POST request example:</h2>
+<pre><code>{
+    "Triggers" : {
+        "TimeRange" : 
+        {
+            "start" : 1466784000,
+            "end" : 1467212400
+        }
+    },
+    "Observables" : {
+        "Client" :
+        [
+            {   
+                "value":"1.1.1.1",
+                "version":"ipv4"
+            }
+        ],
+        "IpAddress" : 
+        [
+            {
+                "value":"209.99.40.222", 
+                "version": "ipv4"
+            }
+        ],
+        "DomainName" : 
+        [
+            {
+                "value":"www.theforwardview.com"
+            },
+            {
+                "value":"dlnembnfbcpjnepmfjmngjenhhajpdfd.s3.amazonaws.com"
+            }
+        ],
+        "Url" : 
+        [
+            {
+                "value":"http://www.theforwardview.com/feed/"
+            },
+            {
+                "value":"http://dlnembnfbcpjnepmfjmngjenhhajpdfd.s3.amazonaws.com/14/version.txt"
+            }
+        ]
+    }
+    "Configurations":
+    {
+        "logFormat":"src|srcport|dst|dstport|cs-uri"
+    }
+}</code></pre>
+<h2>POST request example:</h2>
+<pre><code>curl -X POST -H "Content-Type: application/json" --data '{ "Triggers" : {"TimeRange":{"start":1466784000,"end":1467212400}},"Observables":{"IpAddress":[{"value":"209.99.40.222", "version":"ipv4"}],"DomainName" :[{"value":"www.theforwardview.com"},{"value":"dlnembnfbcpjnepmfjmngjenhhajpdfd.s3.amazonaws.com"}],"Url" : [{"value":"http://www.theforwardview.com/feed/"} ,{"value":"http://dlnembnfbcpjnepmfjmngjenhhajpdfd.s3.amazonaws.com/14/version.txt"}]} "Configurations":{"logFormat":"src|srcport|dst|dstport|cs-uri"}}' localhost:8888/api/clientActivity</code></pre>
+<h2>Response format:</h2>
+<pre><code> {
+     "domainset": [
+        {
+            "value": "theforwardview.com",
+            "logs":{
+                "payload":["Bluecoat|src=xx.xx.xx.xx|srcport=xxxx|dst=xxx.xxx.xxx.xxx|dstport=80|username=-|devicetime=[01/01/2014:08:50:09 GMT]|s-action=TCP_TUNNELED|sc-status=0|cs-method=TUNNEL|time-taken=4966|sc-bytes=0|cs-bytes= 0|cs-uri-scheme=http|cs-host=xxx.xxx.xxx.xxx|c s-uri-path=/|cs-uri-query=-|cs-uri-e xtension=-|cs-auth-group=-|rs( Content-Type)=-|cs(User-Agent)=-|cs(Referer)=-|sc-filter-result=DENIED|filter-category=Malicious_Outbound_Data/Botnets|cs-uri=http://xxx.xxx.xxx.xxx/"],
+                "format":[{"src":"xx.xx.xx.xx","srcport":"1678","dst":"xx.xx.xx.xx","dstport":"80","cs-uri":"http://xx.xx.xx.xx/"}]
+
+            },
+            "summary":{
+                "client":
+                {
+                    "xx.xx.xx.xx":10,
+                    "xx.xx.xx.xx2":12
+                },
+                "ip":
+                {
+                    "xx.xx.xx.xx":10,
+                    "xx.xx.xx.xx":1
+                 },
+                "uri":
+                {
+                    "http://www.theforwardview.com/feed/":12
+                },
+                "domain"
+                {
+                    "theforwardview.com":12
+                }
+            }
+        }
+    ],
+    "urlset": [
+        {
+            "value": "http://www.theforwardview.com/feed/",
+            "logs":{
+                "payload":["Bluecoat|src=xx.xx.xx.xx|srcport=xxxx|dst=xxx.xxx.xxx.xxx|dstport=80|username=-|devicetime=[01/01/2014:08:50:09 GMT]|s-action=TCP_TUNNELED|sc-status=0|cs-method=TUNNEL|time-taken=4966|sc-bytes=0|cs-bytes= 0|cs-uri-scheme=http|cs-host=xxx.xxx.xxx.xxx|c s-uri-path=/|cs-uri-query=-|cs-uri-e xtension=-|cs-auth-group=-|rs( Content-Type)=-|cs(User-Agent)=-|cs(Referer)=-|sc-filter-result=DENIED|filter-category=Malicious_Outbound_Data/Botnets|cs-uri=http://xxx.xxx.xxx.xxx/"
+                ],
+                "format":[{"src":"xx.xx.xx.xx","srcport":"1678","dst":"xx.xx.xx.xx","dstport":"80","cs-uri":"http://xx.xx.xx.xx/"}]
+                ]
+            },
+            "summary":{
+                "client":
+                {
+                    "xx.xx.xx.xx":10,
+                    "xx.xx.xx.xx2":12
+                },
+                "ip":
+                {
+                    "xx.xx.xx.xx":10,
+                    "xx.xx.xx.xx":1
+                 },
+                "uri":
+                {
+                    "http://www.theforwardview.com/feed/":12
+                },
+                "domain"
+                {
+                    "theforwardview.com":12
+                }
+            }
+
+        }
+    ]
+
+ }</code></pre>
+<p>Edit By <a href="http://mahua.jser.me">MaHua</a></p>
+</body></html>

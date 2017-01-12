@@ -1,0 +1,122 @@
+---
+title: "Prediction Model for Exercise Manner of Machine Learning"
+author: "Xuanru Shen"
+date: "1/7/2017"
+output: html_document
+---
+
+# Abstract
+In order to make prediction of the exercise manner, we are supposed to focus on the personal activity data of 6 people. By making analysis and trials, using machine learning methods we have been learned in this course, predict the manner for the testing set and make submition. 
+
+
+# Data Exploratory
+There are two datasets, training and testing. Training (19622 by 160) and testing (20 by 160). classe in training set is the outcome(dependent variable) that we want to predict. The outcome has five levels, A,B,C,D,E, which indicate it would not be a linear regression. We also set the levels as a factor vector for further usage. 
+
+Based on the data in pml-testing.csv, there are only 60 columns having valuable info, the remaining 100 columns are NA. In order to build model to predict the result in testing set, we want to make usage of those remaining 60 variables. Then we get the subset of the training data with only 60 variables. 
+
+Among those 60 variables, one is the dependent variable(outcome), first 7 variables are name, time, and window info which is probably not essential to the model. We are not including those at this time. In total, we have 52 predictor candidates, one outcome. With too many of predictors, first we want to select some of them which make big contribution to the outcome, also, not losing many information. 
+
+## Data cleaning
+```{r,results='hide',message=FALSE, warning=FALSE}
+library(rpart)
+library(caret)
+library(rattle)
+library(ggplot2)
+library(gbm)
+library(randomForest)
+library(e1071)
+
+# Read data
+if(exists("training")==FALSE){
+  training <- read.csv("~/Downloads/pml-training.csv",na.string = "NA",stringsAsFactors = FALSE)
+}
+
+if(exists("testing")==FALSE){
+  testing <- read.csv("~/Downloads/pml-testing.csv",na.string = "NA",stringsAsFactors = FALSE)
+}
+```
+
+```{r}
+# delete columns that only contains NA
+training<-training[,as.numeric(colSums(is.na(testing))<nrow(testing)) == 1]
+testing <- testing[,colSums(is.na(testing))<nrow(testing)]
+
+# Creat training and test sets
+inTrain <- createDataPartition(y=training$classe,p=0.75,list = FALSE)
+Trainset <- training[inTrain,]
+Testset <- training[-inTrain,]
+dim(Trainset);dim(Testset)
+
+predictors <- Trainset[,8:60]
+predictors$classe <- factor(predictors$classe)
+```
+
+
+```{r}
+# pca
+smallt <- prcomp(predictors[,1:52])
+summary(smallt)
+```
+By principal component analysis, we can see for the first 5 components, it could explain above 80%, for the fist 7 components, the proportion would exceed 90%. We know that we may not need this much variables for modeling, but few.
+
+
+# Method exploring
+
+Since it is a supervised the learning, we are not using unsupervised method like svm, clustering here. 
+
+To make our prediction much more convincing and accurate, we use cross validation and split our "training set" to the train(75%) and test(25%). By calculating the accuracy about predict the Testset outcome among those ML methods, we could get the best method.
+
+# ML model comparison
+we use random forest, linear discriminant analysis, boosting, bagging and classification tree here. 
+
+Use caret, randomForest package, and use predict to get the predictions based on the method I pick, then compare the prediction with the true result to get the accuracy rate. By setting classe as the outcome, other remaining variables as predictors, using tree based method to train our data and get certain results.
+
+```{r}
+fit2<- train(classe~.,data = predictors,method="rpart") # classification tree
+pred2 <- predict(fit2,Testset)
+confusionMatrix(Testset$classe,pred2)$overall[1]
+
+fancyRpartPlot(fit2$finalModel)
+```
+This graph gives a basic idea how the tree based method split the variables and how it decides the outcome. Since the accuracy for this classification tree is 48.3%, we are going to try other method.
+```{r,results='hide',message=FALSE, warning=FALSE}
+fit3<- randomForest(classe~.,data = predictors) # random forest
+fit4<- train(classe~.,data = predictors,method="lda") # linear discriminant analysis
+fit5<- train(classe~.,data = predictors,method="gbm") # boosting
+fit6<- train(classe~.,data = predictors,method="treebag") # bagging
+```
+
+```{r}
+pred3 <- predict(fit3,Testset)
+confusionMatrix(Testset$classe,pred3)$overall[1]
+
+pred4 <- predict(fit4,Testset)
+confusionMatrix(Testset$classe,pred4)$overall[1]
+
+pred5 <- predict(fit5,Testset)
+confusionMatrix(Testset$classe,pred5)$overall[1]
+
+pred6 <- predict(fit6,Testset)
+confusionMatrix(Testset$classe,pred6)$overall[1]
+
+accurateMatrix<-data.frame(confusionMatrix(Testset$classe,pred2)$overall[1],confusionMatrix(Testset$classe,pred3)$overall[1],confusionMatrix(Testset$classe,pred4)$overall[1],confusionMatrix(Testset$classe,pred5)$overall[1],confusionMatrix(Testset$classe,pred6)$overall[1])
+
+colnames(accurateMatrix) <- c("classification tree","random forest","linear discriminant analysis","boosting","bagging")
+
+boxplot(accurateMatrix,names=c("classification tree","random forest","linear discriminant analysis","boosting","bagging"), ylab="accuracy rate",main="accuracy rate based on random forest method")
+```
+
+From the boxplot, we can easily compare among the five. Random forest has highest accuracy rate
+
+Using the testing data, applying my trained method, the prediction would be saved in predResult. I write the predict result to the location for quiz usage.
+```{r,eval=FALSE}
+predResult <- predict(fit3,testing)
+write.csv(predResult,file = "~/Downloads/Result.csv")
+```
+
+# Summary 
+I make the choice of random forest is becuase it has highest accuracy on the Testset I split from the training.csv among all other tree-based method. T main topic of this course would more focus on tree, and the accuracy is very high based on random forest, I would count my method as ideal for now.
+
+
+# further explore
+I first want to set.seed with 1 to 50 in order to get boxplot of the accuracy of each method, regarding about the time consuming for some of the method, I didn't do that this time. Hope to optimize the method in order to reduce the time. Also, use tree based method, we could easily interpret our model, but may cause overfitting. Probably explore more about the principal component analysis would help as well. 
